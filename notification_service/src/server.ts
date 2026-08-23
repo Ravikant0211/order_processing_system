@@ -2,9 +2,11 @@ import dotenv from "dotenv";
 dotenv.config();
 
 import { connectRabbitMQ } from "./config/rabbitmq";
-import { startOrderCreatedConsumer } from "./consumer/orderCreatedConsumer";
+import { connectDB } from "./config/db";
+import { startOrderCreatedConsumer } from "./consumers/orderCreatedConsumer";
 
 async function start() {
+    await connectDB();
     const channel = await connectRabbitMQ();
     startOrderCreatedConsumer(channel);
 }

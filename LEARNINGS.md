@@ -25,6 +25,21 @@
 **Answer**: each order request now makes up to 3 calls to catalog-service (1 + 2 retries), so N concurrent orders becomes up to 3N calls hammering a dependency that's already dead — while each of those N customer-facing requests is also now taking up to ~9.7s to fail instead of the ~3s a bare timeout would've given them. So retry, without a breaker, actually partially undid what the timeout alone had already fixed: it reintroduced a version of the original resource-exhaustion problem (sockets/memory held open longer, per request), just capped at ~10s instead of forever. That's exactly the case a breaker was built for.
 
 
+6. **Why is order.created published fire-and-forget, instead of order-service waiting for confirmation that notification-service actually received and processed it?**
+
+**Answer**: Because `order.created` is a fact that notification service can react to. The order service must not halt the creation of order in the wait of notification-service processing, the order creation must go ahead even if the notification-service is down. Since it doesn't make sense to disregard the order creation if notification-service is not able to process the message.
+The order service pushes the order.created events to the queue and the notification-service react on them at it's own pace. This also decouples the order service and notification-services.
+
+
+7. **Trace it through**: _what happens to the message — and to notification-service — if the process crashed right after the console.log line but before channel.ack(msg) ran?_
+
+**Answer**: The message will stay in the queue as `Unacked` in case of `noAck: false`. And it will be redelivered to another free worker after a delay. The notification-service, when live again, will connect to the queue and consume that message again. Since redeliveries comes with duplicacy the notification-service must be idempotent.
+
+
+8. **We named a real gap earlier**: if RabbitMQ is unreachable at the exact moment order-service tries to publish, the order still gets created successfully, but the event is lost forever with nothing recording that it happened. Why did we choose to let the order succeed anyway instead of failing the whole checkout when the publish fails — and what are we accepting by making that choice?
+
+**Answer**: The tradeoff is between two bad options — occasionally losing a notification silently, versus making every checkout's success depend on RabbitMQ being reachable at that exact instant, which would reintroduce the same tight-coupling/cascading-failure risk. We're choosing the lesser evil on purpose, not pretending it's fixed — The outbox pattern is specifically designed to get both properties at once: the order write and the "event happened" record land in the same database transaction, so they can never disagree, and a separate relay process retries publishing to RabbitMQ independently, with retries, until it succeeds.
+
 
 #### Timeout
 
