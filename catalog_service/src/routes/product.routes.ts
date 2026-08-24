@@ -7,6 +7,8 @@ router.post("/", ProductController.createProduct);
 router.get("/", ProductController.listProducts);
 router.get("/:id", ProductController.getProduct);
 router.patch("/:id/stock", ProductController.updateStock);
+router.post("/:id/reserve", ProductController.reserveStock);
+router.post("/:id/release", ProductController.releaseStock);
 
 
 export default router;

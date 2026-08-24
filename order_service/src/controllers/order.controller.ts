@@ -7,11 +7,10 @@ export async function createOrder(req: Request, res: Response) {
         const order = await OrderService.placeOrder(productId, quantity);
         return res.status(201).json(order);
     } catch(err: any) {
-        if (err.response?.status === "404") {
-            return res.status(404).json({ error: "Product not found" });
-        }
-        // console.log("error recieved: ", err.statusCode, err.message, err.code, err.response);
-        const statusCode = err.statusCode || 500;
-        res.status(statusCode).json({ error: err.message || "Something went wrong" });
+        // err.response.status: errors from catalogClient (axios)
+        // err.statusCode: our own custom errors, errors from paymentClient
+        const statusCode = err.response?.status || err.statusCode || 500;
+        const message = err.response?.data?.error || err.message || "something went wrong";
+        res.status(statusCode).json({ error: message });
     }
 }

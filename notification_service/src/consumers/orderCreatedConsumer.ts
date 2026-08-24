@@ -29,10 +29,12 @@ export function startOrderCreatedConsumer(channel: Channel): void {
                 `[notification-service] Sending order confirmation for order ${payload.orderId} ` +
                 `(product ${payload.productId}, qty ${payload.quantity})`
             );
+            
             // TEMPORARY, for the Milestone 4 duplicate-delivery exercise only:
             // widens the crash window between "processed" and "acked" so it's
             // humanly possible to kill the process in between on purpose.
-            await new Promise((resolve) => setTimeout(resolve, 5000));
+            // await new Promise((resolve) => setTimeout(resolve, 5000));
+
             channel.ack(msg);
         } catch (err) {
             console.log(`Failed to process order.created message:`, (err as Error).message);
