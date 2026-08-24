@@ -1,9 +1,4 @@
-// Stands in for a real payment gateway (e.g. Stripe). No network call —
-// integrating an actual provider is out of scope for learning the saga
-// pattern itself; this simulates one succeeding or declining.
-
-// Dial to 0 or 1 to force a deterministic outcome while testing the saga's
-// compensation path.
+// switch to 1 testing the saga's compensation path
 const PAYMENT_FAILURE_RATE = 0.3;
 
 export interface PaymentResult {
