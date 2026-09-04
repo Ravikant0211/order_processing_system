@@ -7,8 +7,7 @@ import { startOrderCreatedConsumer } from "./consumers/orderCreatedConsumer";
 
 async function start() {
     await connectDB();
-    const channel = await connectRabbitMQ();
-    startOrderCreatedConsumer(channel);
+    await connectRabbitMQ(startOrderCreatedConsumer);
 }
 
 start().catch((err) => {
