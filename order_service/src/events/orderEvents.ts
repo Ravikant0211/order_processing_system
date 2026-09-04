@@ -10,19 +10,22 @@ interface OrderCreatedPayload {
     createdAt?: Date;
 }
 
-export function publishOrderCreated(payload: OrderCreatedPayload): void {
-    try {
-        const channel = getChannel();
+export function publishOrderCreated(payload: OrderCreatedPayload): Promise<void> {
+    const channel = getChannel();
+
+    return new Promise((resolve, reject) => {
         channel.publish(
             ORDER_EVENTS_EXCHANGE,
             ORDER_CREATED_ROUTING_KEY,
             Buffer.from(JSON.stringify(payload)),
-            { persistent: true }
+            { persistent: true },
+            (err) => {
+                if (err) {
+                    reject(err);
+                } else {
+                    resolve();
+                }
+            }
         );
-    } catch (err) {
-        // Publish failures are swallowed on purpose for now — an order is still
-        // valid even if nobody hears about it yet. This is the exact gap the
-        // outbox pattern (Milestone 6) exists to close.
-        console.log("Failed to publish order.created event:", (err as Error).message);
-    }
+    });
 }
